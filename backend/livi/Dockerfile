@@ -2,23 +2,16 @@
 # this version, despite the CI pipeline (V44) and staging preparation
 # assuming a containerized deployment path. package.json declares
 # "engines": { "node": ">=20" } — matched exactly here, same major version
-# CI already runs against (see .github/workflows/ci.yml).
+# CI already runs against (see .github/workflows/backend-ci.yml).
 #
-# V45 finding #2: no package-lock.json exists anywhere in this repository
-# either — verified directly by running `npm ci --dry-run`, which fails
-# immediately with EUSAGE ("can only install with an existing
-# package-lock.json"). This is a real, honest limitation of every
-# environment this project has been built in so far: none has had network
-# access to run a real `npm install` and generate one. This Dockerfile
-# therefore uses `npm install`, not `npm ci` — `npm install` resolves and
-# installs dependencies without requiring a pre-existing lockfile, but
-# without one, builds are not byte-for-byte reproducible (a dependency's
-# transitive version could drift between builds). Before this Dockerfile
-# is used for a real staging or production deployment, generate and commit
-# a real package-lock.json (`npm install` once, in an environment with
-# network access, then commit the resulting lockfile) and switch this to
-# `npm ci` for reproducible, faster builds. Documented explicitly in
-# docs/V45_STAGING_ENVIRONMENT.md rather than silently worked around.
+# SESSION 26 (§41 prompt maître) : un vrai package-lock.json existe
+# désormais (généré réellement via .github/workflows/generate-lockfiles.yml
+# sur les serveurs GitHub, qui ont un accès réseau réel — voir ce fichier
+# et RAPPORT_AUDIT_SESSION26_RECONCILIATION_BRANCHES.md). `npm ci` est donc
+# utilisé ci-dessous plutôt que `npm install` : installation reproductible
+# à l'octet près à partir du lockfile committé, plus rapide qu'un
+# `npm install`, exactement la bascule que le commentaire précédent de ce
+# fichier annonçait comme prochaine étape.
 #
 # Multi-stage: the build stage installs dependencies; the runtime stage
 # reinstalls only production dependencies and copies application source,
@@ -26,8 +19,8 @@
 
 FROM node:20-slim AS build
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 FROM node:20-slim AS runtime
 ENV NODE_ENV=production
@@ -35,8 +28,8 @@ WORKDIR /app
 
 # Non-root user — the base image's default `node` user/group already
 # exists on node:*-slim images.
-COPY package.json ./
-RUN npm install --omit=dev && npm cache clean --force
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev && npm cache clean --force
 
 COPY src ./src
 COPY migrations ./migrations
