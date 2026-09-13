@@ -1,0 +1,57 @@
+name: Générer les lockfiles (backend + frontend)
+
+# SESSION 26 — §41 du prompt maître : aucun package-lock.json n'existe nulle
+# part dans ce dépôt. Ce fichier ne peut pas être fabriqué à la main de
+# façon honnête : les versions exactement résolues et les hachages
+# d'intégrité de chaque dépendance (et sous-dépendance) ne peuvent venir
+# que d'un vrai `npm install` contre le registre npm réel. Aucun accès
+# réseau n'existait dans le sandbox qui a préparé cette session — ce
+# workflow fait tourner ce même `npm install` sur les machines GitHub
+# Actions, qui ont un accès réseau réel, puis commit le résultat.
+#
+# Déclenchement manuel uniquement (comme supabase-migrations.yml) : générer
+# un lockfile est une action ponctuelle, pas quelque chose qui doit se
+# reproduire à chaque push.
+#
+# Usage : onglet Actions du dépôt → "Générer les lockfiles" → Run workflow.
+# Un commit apparaît ensuite sur la branche choisie avec les deux
+# package-lock.json (backend/livi, frontend/livi) s'ils n'existaient pas
+# encore ou ont changé.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm install — backend/livi
+        working-directory: backend/livi
+        run: npm install
+
+      - name: npm install — frontend/livi
+        working-directory: frontend/livi
+        run: npm install
+
+      - name: Commit les lockfiles générés
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/livi/package-lock.json frontend/livi/package-lock.json
+          if git diff --cached --quiet; then
+            echo "Aucun changement de lockfile — rien à committer."
+          else
+            git commit -m "chore: générer package-lock.json (backend + frontend) — §41 prompt maître"
+            git push
+          fi

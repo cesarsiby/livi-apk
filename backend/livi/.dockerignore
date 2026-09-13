@@ -1,0 +1,13 @@
+node_modules
+.env
+.env.*
+!.env.example
+storage
+*.log
+.git
+.github
+tests
+backend/tests
+docs
+coverage
+.DS_Store

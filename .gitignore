@@ -1,0 +1,32 @@
+# Dependencies
+**/node_modules/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Local/runtime storage
+**/storage/
+
+# Build/test outputs
+coverage/
+dist/
+build/
+.expo/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Local archives / temporary work
+*.zip
+*.tar.gz
+.tmp/

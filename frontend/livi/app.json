@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "LIVI",
+    "slug": "livi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "livi",
+    "icon": "./assets/branding/livi-icon.png",
+    "splash": {
+      "image": "./assets/branding/livi-splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#071021"
+    },
+    "android": {
+      "package": "com.livi.app",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.livi.app"
+    },
+    "plugins": [
+      ["expo-camera", {
+        "cameraPermission": "LIVI a besoin d'accéder à l'appareil photo pour scanner les QR codes de livraison."
+      }],
+      ["expo-location", {
+        "locationWhenInUsePermission": "LIVI a besoin de votre position pour le suivi des livraisons en cours."
+      }]
+    ],
+    "owner": "cesarsiby",
+    "extra": {
+      "eas": {
+        "projectId": "0d103a16-1179-41fe-8754-68fcbcda65dc"
+      }
+    }
+  }
+}

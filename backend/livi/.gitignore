@@ -1,0 +1,36 @@
+# V41 — audit sécurité production: this file was entirely absent before
+# V41. Its absence meant a plain `git add .` in this repository would have
+# committed node_modules/, any local .env file (secrets: JWT signing keys,
+# PAYMENT_WEBHOOK_SECRET, LIVI_PROOF_ENCRYPTION_KEY, FILE_ACCESS_SECRET,
+# DATABASE_URL), local upload storage, and editor/OS artifacts.
+
+# Dependencies
+node_modules/
+npm-debug.log*
+
+# Environment / secrets — never commit real credentials.
+.env
+.env.*
+!.env.example
+
+# Local file storage (UPLOAD_DIR default in src/config/env.js)
+storage/
+
+# Logs
+*.log
+logs/
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Test / coverage output
+coverage/
+.nyc_output/
+
+# Build artifacts (none currently produced, kept for forward compatibility)
+dist/
+build/

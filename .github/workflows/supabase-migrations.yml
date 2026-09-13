@@ -1,0 +1,77 @@
+name: Supabase Migrations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  migrate:
+    name: Apply PostgreSQL migrations to Supabase
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend/livi
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+      JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+      JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify migrations
+        run: |
+          echo "Migration directory:"
+          pwd
+          echo ""
+          echo "SQL migrations:"
+          find migrations -maxdepth 1 -type f -name '*.sql' | sort
+          echo ""
+          echo "Migration count:"
+          count=$(find migrations -maxdepth 1 -type f -name '*.sql' | wc -l)
+          echo "$count"
+          test "$count" -eq 42
+
+      - name: Run Supabase migrations
+        run: npm run migrate
+
+      - name: Verify applied migrations
+        run: |
+          node --input-type=module <<'NODE'
+          import { pool } from './src/config/db.js';
+
+          try {
+            const result = await pool.query(`
+              SELECT version, applied_at
+              FROM schema_migrations
+              ORDER BY version
+            `);
+
+            console.log(`Applied migrations: ${result.rowCount}`);
+
+            for (const row of result.rows) {
+              console.log(`${row.version} | ${row.applied_at}`);
+            }
+
+            if (result.rowCount !== 42) {
+              throw new Error(
+                `Expected 42 applied migrations, found ${result.rowCount}`
+              );
+            }
+
+            console.log('SUCCESS: 42 migrations are applied.');
+          } finally {
+            await pool.end();
+          }
+          NODE

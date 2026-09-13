@@ -1,0 +1,35 @@
+-- V56 — SESSION 26, §28 du prompt maître (dispatch transporteur, concurrence).
+--
+-- services/missionDispatch.js documente depuis V54 l'invariant "un
+-- transporteur ne peut jamais accepter deux missions simultanément", et
+-- findNextCandidate() l'applique bien en filtrant les transporteurs ayant
+-- déjà un shipment en 'assigned'/'picked_up'/'in_transit'/'arrived'.
+--
+-- Mais ce filtre n'est qu'une lecture (SELECT, pas FOR UPDATE) au moment du
+-- dispatch. Deux appels dispatchNextOffer() concurrents pour DEUX livraisons
+-- différentes peuvent tous les deux lire "ce transporteur est libre" avant
+-- qu'aucun des deux n'ait écrit quoi que ce soit — chacun verrouille
+-- seulement SA PROPRE ligne shipment (FOR UPDATE sur shipments WHERE id=$1),
+-- jamais l'ensemble des lignes du transporteur candidat. Le même
+-- transporteur peut alors recevoir deux offres, et POST
+-- /transporter/missions/:id/accept (routes/compatibility.js) ne vérifie que
+-- l'état de LA mission acceptée, jamais si ce transporteur a déjà une autre
+-- mission active — il peut donc accepter les deux.
+--
+-- Un index unique partiel rend l'état incohérent structurellement
+-- impossible, y compris sous concurrence réelle (contrainte au niveau
+-- moteur, pas une vérification applicative qui peut elle-même être
+-- contournée par une course différente) — exactement ce que demande le
+-- prompt maître : "Utiliser une protection transactionnelle et/ou une
+-- contrainte DB appropriée."
+--
+-- Un seul transporteur ne peut donc plus avoir qu'AU PLUS une ligne
+-- shipments dans un statut actif à un instant donné. La seconde tentative
+-- d'UPDATE (que ce soit l'acceptation ou toute autre transition vers un de
+-- ces statuts) échoue avec une violation de contrainte unique (23505) au
+-- lieu de réussir silencieusement en incohérence — à charge pour la route
+-- de la traduire en 409 propre plutôt que de la laisser remonter en 500
+-- (voir la modification correspondante dans routes/compatibility.js).
+CREATE UNIQUE INDEX shipments_transporter_single_active_mission
+  ON shipments(transporter_id)
+  WHERE status IN ('assigned','picked_up','in_transit','arrived');

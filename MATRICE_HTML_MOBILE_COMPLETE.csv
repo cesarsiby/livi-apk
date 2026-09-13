@@ -1,0 +1,50 @@
+SITE HTML,FRONTEND MOBILE,STATUT
+_layout.html,BuyerDashboardScreen / SellerDashboardScreen / TransporterDashboardScreen / AdminDashboardScreen,MATCH
+index.html,FeedScreen,MATCH
+pages/acheteur/addresses.html,AddressesScreen,MATCH
+pages/acheteur/cashback.html,CashbackScreen,MATCH
+pages/acheteur/dashboard-acheteur.html,BuyerDashboardScreen,MATCH
+pages/acheteur/historique-commandes.html,OrdersScreen,MATCH
+pages/acheteur/loyalty-program.html,LoyaltyScreen,MATCH
+pages/acheteur/order-details.html,OrderDetailsScreen,MATCH
+pages/acheteur/payment-methods.html,PaymentMethodsScreen,MATCH
+pages/acheteur/refunds.html,RefundsScreen,MATCH
+pages/acheteur/wishlist.html,WishlistScreen,MATCH
+pages/admin/platform-analytics.html,PlatformAnalyticsScreen,MATCH
+pages/admin/support-center.html,SupportCenterScreen,MATCH
+pages/admin/users-management.html,AdminUsers (AdminResourceScreen),MATCH
+pages/auth/forgot-password.html,ForgotPasswordScreen,MATCH
+pages/auth/login.html,LoginScreen,MATCH
+pages/auth/register.html,RegisterScreen,MATCH
+pages/auth/security-center.html,SecurityScreen,MATCH
+pages/auth/two-factor-auth.html,TwoFactorAuthScreen,MATCH
+pages/auth/verify-email.html,VerifyEmailScreen,MATCH
+pages/auth/verify-phone.html,VerifyOtpScreen,MATCH
+pages/escrow/deposit.html,DepositScreen,MATCH
+pages/escrow/escrow-center.html,EscrowCenterScreen,MATCH
+pages/escrow/litiges-escrow.html,DisputesScreen,MATCH
+pages/escrow/transaction-history.html,TransactionsScreen,MATCH
+pages/escrow/wallet.html,WalletScreen,MATCH
+pages/escrow/withdraw.html,WithdrawScreen,MATCH
+pages/live-shopping/creator-tools.html,CreatorToolsScreen,MATCH
+pages/live-shopping/live-dashboard-1.html,LiveDashboardScreen,MATCH
+pages/live-shopping/live-shopping-1.html,LiveShopsScreen / LiveShopScreen,MATCH
+pages/live-shopping/video-analytics.html,VideoAnalyticsScreen,MATCH
+pages/live-shopping/video-manager.html,VideoManagerScreen,MATCH
+pages/live-shopping/video-upload.html,VideoUploadScreen,MATCH
+pages/transporteur/dashboard-transporteur.html,TransporterDashboardScreen,MATCH
+pages/transporteur/delivery-history.html,DeliveryHistoryScreen,MATCH
+pages/transporteur/earnings.html,EarningsScreen,MATCH
+pages/transporteur/live-map.html,LiveMapScreen,MATCH
+pages/transporteur/missions.html,MissionsScreen,MATCH
+pages/transporteur/qr-validation.html,QRValidationScreen / QRScannerScreen,MATCH
+pages/transporteur/tracking-livraison.html,TrackingScreen,MATCH
+pages/transporteur/wallet-transporteur.html,WalletScreen,MATCH
+pages/vendeur/analytics-vendeur.html,AnalyticsScreen,MATCH
+pages/vendeur/customer-messages.html,SellerMessagesScreen,MATCH
+pages/vendeur/inventory.html,InventoryScreen,MATCH
+pages/vendeur/onboarding-vendeur.html,SellerOnboardingScreen,MATCH
+pages/vendeur/product-editor.html,SellerProductEditorScreen,MATCH
+pages/vendeur/products-manager.html,SellerProductsScreen,MATCH
+pages/vendeur/seller-kyc.html,SellerKYCScreen,MATCH
+pages/vendeur/seller-payouts.html,PayoutsScreen,MATCH

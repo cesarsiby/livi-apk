@@ -1,0 +1,208 @@
+Fichier_Frontend_ou_Backend,Methode,Endpoint,Statut,Note
+features/seller/sellerOnboardingApi.ts,PATCH,/vendor/shop,MATCHED,compatibility.js
+features/seller/sellerKycApi.ts,GET,/users/me,MATCHED,users.js
+features/seller/sellerApi.ts,GET,/vendor/products?${qs},MATCHED,compatibility.js
+features/seller/sellerApi.ts,PUT,/vendor/products/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,DELETE,/vendor/products/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/products/${encodeURIComponent(id)}/media,MATCHED,compatibility.js
+features/seller/sellerApi.ts,DELETE,/vendor/products/${encodeURIComponent(id)}/media/${encodeURIComponent(mediaId)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,PATCH,/vendor/inventory/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/orders?${qs},MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/orders/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,POST,/vendor/orders/${encodeURIComponent(id)}/confirm,MATCHED,compatibility.js
+features/seller/sellerApi.ts,POST,/vendor/orders/${encodeURIComponent(id)}/ready,MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/analytics?${new URLSearchParams({period})},MATCHED,compatibility.js
+features/seller/sellerApi.ts,DELETE,/vendor/videos/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/chat/conversations/${encodeURIComponent(id)}/messages,MATCHED,chat.js
+features/seller/sellerApi.ts,POST,/chat/conversations/${encodeURIComponent(id)}/messages,MATCHED,chat.js
+features/seller/sellerApi.ts,POST,/chat/conversations/${encodeURIComponent(id)}/read,MATCHED,chat.js
+features/seller/sellerApi.ts,GET,/vendor/dashboard,MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/shop,MATCHED,compatibility.js
+features/seller/sellerApi.ts,PATCH,/vendor/shop,MATCHED,compatibility.js
+features/seller/sellerApi.ts,POST,/vendor/products,MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/vendor/inventory,MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/payouts/mine,MATCHED,payouts.js
+features/seller/sellerApi.ts,GET,/escrow/balance,MATCHED,escrow.js
+features/seller/sellerApi.ts,POST,/payouts,MATCHED,payouts.js
+features/seller/sellerApi.ts,GET,/vendor/videos,MATCHED,compatibility.js
+features/seller/sellerApi.ts,GET,/chat/conversations,MATCHED,chat.js
+features/auth/authApi.ts,POST,/auth/register,MATCHED,Session 9: payload now includes password+password_confirmation; AuthProvider.register() now persists the returned session directly (previously discarded it — see RAPPORT_AUDIT_SESSION9_AUTH.md)
+features/auth/authApi.ts,POST,/auth/otp/send,MATCHED,auth.js
+features/auth/authApi.ts,POST,/auth/otp/verify,REMOVED_SESSION9,OTP/SMS removed from account opening — verifyOtp() and this route deleted; password-based register()/login() replace it entirely (see RAPPORT_AUDIT_SESSION9_AUTH.md)
+features/auth/authApi.ts,POST,/auth/refresh,MATCHED,auth.js
+features/auth/authApi.ts,POST,/auth/login,MATCHED,"Session 9: this row previously only confirmed authApi.ts declares the call — AuthProvider had NO login() method to invoke it, and LoginScreen was OTP-only, so this endpoint had no real caller in practice. Both fixed (see RAPPORT_AUDIT_SESSION9_AUTH.md)."
+features/auth/authApi.ts,POST,/auth/logout,MATCHED,auth.js
+features/auth/AuthProvider.tsx,GET,/users/me,MATCHED,users.js
+features/social/socialApi.ts,GET,/feed?${qs},MATCHED,compatibility.js
+features/social/socialApi.ts,POST,/social/${encodeURIComponent(id)}/like,MATCHED,compatibility.js
+features/social/socialApi.ts,DELETE,/social/${encodeURIComponent(id)}/like,MATCHED,compatibility.js
+features/social/socialApi.ts,GET,/social/${encodeURIComponent(id)}/comments,MATCHED,compatibility.js
+features/social/socialApi.ts,POST,/social/${encodeURIComponent(id)}/comments,MATCHED,compatibility.js
+features/social/socialApi.ts,POST,/social/vendors/${encodeURIComponent(vendorId)}/follow,MATCHED,compatibility.js
+features/social/socialApi.ts,DELETE,/social/vendors/${encodeURIComponent(vendorId)}/follow,MATCHED,compatibility.js
+features/social/socialApi.ts,POST,/social/${encodeURIComponent(id)}/share,MATCHED,compatibility.js
+features/orders/ordersApi.ts,GET,/orders?${qs},MATCHED,orders.js
+features/orders/ordersApi.ts,GET,/orders/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/orders/ordersApi.ts,POST,/orders/${encodeURIComponent(id)}/confirm-receipt,MATCHED,compatibility.js
+features/orders/ordersApi.ts,POST,/orders/${encodeURIComponent(id)}/review,MATCHED,orders.js
+features/orders/ordersApi.ts,POST,/orders/${encodeURIComponent(id)}/cancel,MATCHED,orders.js
+features/profile/profileApi.ts,POST,/auth/sessions/${encodeURIComponent(sessionId)}/revoke,MATCHED,authSessions.js
+features/profile/profileApi.ts,GET,/users/me,MATCHED,users.js
+features/profile/profileApi.ts,PATCH,/users/me,MATCHED,users.js
+features/profile/profileApi.ts,GET,/auth/sessions,MATCHED,authSessions.js
+features/profile/profileApi.ts,POST,/auth/sessions/password,MATCHED,authSessions.js
+features/transporter/transporterApi.ts,GET,/transporter/missions?${qs(params)},MATCHED,compatibility.js
+features/transporter/transporterApi.ts,GET,/transporter/missions/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/missions/${encodeURIComponent(id)}/accept,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/missions/${encodeURIComponent(id)}/reject,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/missions/${encodeURIComponent(id)}/pickup,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/missions/${encodeURIComponent(id)}/arrive,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/missions/${encodeURIComponent(id)}/deliver,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,GET,/transporter/earnings?${qs(params)},MATCHED,compatibility.js
+features/transporter/transporterApi.ts,GET,/transporter/history?${qs(params)},MATCHED,compatibility.js
+features/transporter/transporterApi.ts,GET,/transporter/dashboard,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/transporter/location,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,PATCH,/transporter/availability,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,GET,/transporter/wallet,MATCHED,compatibility.js
+features/transporter/transporterApi.ts,POST,/payouts,MATCHED,payouts.js
+features/transporter/transporterApi.ts,POST,/transporter/qr/scan,MATCHED,compatibility.js
+features/notifications/notificationsApi.ts,POST,/notifications/${encodeURIComponent(id)}/read,MATCHED,notifications.js
+features/notifications/notificationsApi.ts,POST,/notifications/read-all,MATCHED,compatibility.js
+features/notifications/notificationsApi.ts,POST,/notifications/push-token,MATCHED,compatibility.js
+features/notifications/notificationsApi.ts,DELETE,/notifications/push-token,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,PUT,/users/me/addresses/${id},MATCHED,compatibility.js
+features/buyer/buyerApi.ts,DELETE,/users/me/addresses/${id},MATCHED,compatibility.js
+features/buyer/buyerApi.ts,DELETE,/users/me/payment-methods/${id},MATCHED,compatibility.js
+features/buyer/buyerApi.ts,PATCH,/users/me/payment-methods/${id}/default,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,DELETE,/users/me/wishlist/${productId},MATCHED,compatibility.js
+features/buyer/buyerApi.ts,GET,/users/me,MATCHED,users.js
+features/buyer/buyerApi.ts,GET,/users/me/analytics,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,GET,/users/me/addresses,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,POST,/users/me/addresses,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,GET,/users/me/payment-methods,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,POST,/users/me/payment-methods/initiate,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,POST,/users/me/payment-methods/verify,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,POST,/users/me/payment-methods/resend-otp,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,GET,/users/me/wishlist,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,POST,/users/me/wishlist,MATCHED,compatibility.js
+features/buyer/buyerApi.ts,GET,/orders/refunds,MATCHED,compatibility.js
+features/escrow/escrowApi.ts,GET,"/escrow/transactions?${new URLSearchParams(params as Record<string,string>).toString()}",MATCHED,escrow.js
+features/escrow/escrowApi.ts,GET,/escrow/balance,MATCHED,escrow.js
+features/checkout/checkoutApi.ts,GET,/escrow/payment/${encodeURIComponent(reference)}/status,MATCHED,escrow.js
+features/checkout/checkoutApi.ts,GET,/users/me/addresses,MATCHED,compatibility.js
+features/checkout/checkoutApi.ts,GET,/users/me/payment-methods,MATCHED,compatibility.js
+features/checkout/checkoutApi.ts,POST,/orders,MATCHED,orders.js
+features/checkout/checkoutApi.ts,POST,/escrow/payment/init,MATCHED,escrow.js
+features/live/liveApi.ts,GET,/live/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/live/liveApi.ts,DELETE,/vendor/videos/${encodeURIComponent(id)},MATCHED,compatibility.js
+features/live/liveApi.ts,GET,/vendor/videos/${encodeURIComponent(id)}/analytics,MATCHED,compatibility.js
+features/live/liveApi.ts,POST,/vendor/live/${encodeURIComponent(id)}/end,MATCHED,compatibility.js
+features/live/liveApi.ts,GET,/live/active,MATCHED,compatibility.js
+features/live/liveApi.ts,GET,/vendor/videos,MATCHED,compatibility.js
+features/live/liveApi.ts,POST,/vendor/live/start,MATCHED,compatibility.js
+features/live/liveApi.ts,GET,/vendor/subscriptions,MATCHED,compatibility.js
+features/catalogue/catalogueApi.ts,GET,/products?${qs(params)},MATCHED,products.js
+features/catalogue/catalogueApi.ts,GET,/products/${id},MATCHED,compatibility.js
+features/catalogue/catalogueApi.ts,GET,"/products/search?${qs({ q, ...params })}",MATCHED,compatibility.js
+features/catalogue/catalogueApi.ts,GET,/products/featured,MATCHED,compatibility.js
+features/catalogue/catalogueApi.ts,GET,/products/trending,MATCHED,compatibility.js
+screens/buyer/BuyerDashboardScreen.tsx,GET,/live/active,MATCHED,compatibility.js
+features/admin/adminApi.ts,GET,/admin/dashboard,MATCHED,admin.js
+features/disputes/disputesApi.ts,GET,/disputes,MATCHED,disputes.js
+features/disputes/disputesApi.ts,GET,/disputes/${id},MATCHED,compatibility.js
+features/disputes/disputesApi.ts,POST,/disputes,MATCHED,disputes.js
+features/disputes/disputesApi.ts,POST,/disputes/${id}/messages,MATCHED,compatibility.js
+features/disputes/disputesApi.ts,POST,/disputes/${id}/resolve,MATCHED,disputes.js
+features/wallet/walletApi.ts,GET,/escrow/balance,MATCHED,escrow.js
+features/wallet/walletApi.ts,GET,/escrow/transactions/${id},MATCHED,escrow.js
+features/wallet/walletApi.ts,POST,/payouts,MATCHED,payouts.js
+features/wallet/walletApi.ts,GET,/payouts/${id},MATCHED,payouts.js
+compatibility.js,GET,/kyc/mine,DEAD_CODE_DUPLICATE,FIXED this session — was shadowing kyc.js's real handler; duplicate removed
+compatibility.js,POST,/users/me/kyc,MATCHED,"called via uploadFile() (multipart), not apiRequest"
+compatibility.js,GET,/vendor/payouts,DEAD_CODE_DUPLICATE,superseded by unified GET /payouts/mine
+compatibility.js,POST,/vendor/payouts/request,DEAD_CODE_DUPLICATE,superseded by unified POST /payouts — also bypasses the KYC-level gate payouts.js enforces
+compatibility.js,POST,/transporter/wallet/payout,DEAD_CODE_DUPLICATE,superseded by unified POST /payouts — also bypasses the KYC-level gate payouts.js enforces
+compatibility.js,GET,/wallet,DEAD_CODE_DUPLICATE,superseded by GET /escrow/balance
+compatibility.js,GET,/wallet/transactions,DEAD_CODE_DUPLICATE,superseded by GET /escrow/transactions
+compatibility.js,GET,/wallet/transactions/:id,DEAD_CODE_DUPLICATE,superseded by GET /escrow/transactions/:id
+compatibility.js,POST,/wallet/withdraw,DEAD_CODE_DUPLICATE,dead 501 stub; superseded by POST /payouts
+compatibility.js,GET,/wallet/withdrawals,DEAD_CODE_DUPLICATE,superseded by GET /payouts/mine
+compatibility.js,GET,/wallet/withdrawals/:id,DEAD_CODE_DUPLICATE,superseded by GET /payouts/:id
+compatibility.js,GET,/vendor/products/:id/variants,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+compatibility.js,POST,/vendor/products/:id/variants,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+compatibility.js,PUT,/vendor/products/:id/variants/:variantId,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+compatibility.js,DELETE,/vendor/products/:id/variants/:variantId,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+compatibility.js,POST,/vendor/products/:id/media,MATCHED,"called via uploadFile() (multipart), not apiRequest"
+compatibility.js,GET,/products/:productId/media/:mediaId,NO_CALLER_EXPECTED,"served as <Image> URL, not fetched via apiRequest"
+compatibility.js,GET,/admin/sellers,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/transporters,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/orders,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/payments,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/escrow,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/withdrawals,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/disputes,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/verifications,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/products,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/missions,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,GET,/admin/logs,MATCHED_DYNAMIC,"likely reached via AdminResourceScreen's generic list(resource) call — dynamic path, not statically verifiable"
+compatibility.js,POST,/vendor/videos,MATCHED,"called via uploadFile() (multipart), not apiRequest"
+health.js,GET,/health,NO_CALLER_EXPECTED,"infra health check, not called by app"
+authSessions.js,POST,/auth/sessions/logout-all,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+users.js,GET,/users/me/roles,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+users.js,POST,/users/me/roles,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+products.js,POST,/products,DEAD_CODE_DUPLICATE,superseded by POST /vendor/products (compatibility.js)
+orders.js,POST,/orders/:id/status,DEAD_CODE_DUPLICATE,specific transitions (confirm/cancel/pickup/deliver/confirm-receipt) each have their own endpoint; this generic one has no caller
+escrow.js,POST,/escrow/payment/confirm,NO_CALLER_EXPECTED,"staging-only partner-webhook simulator, gated by allowStagingTestHelpers"
+escrow.js,POST,/escrow/withdraw,DEAD_CODE_DUPLICATE,dead 501 stub; superseded by POST /payouts
+admin.js,GET,/admin/users,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,POST,/admin/reconciliation/partner-payments,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,GET,/admin/reconciliation/runs,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,GET,/admin/reconciliation/runs/:id,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,POST,/admin/reconciliation/corrections,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,GET,/admin/reconciliation/corrections,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,POST,/admin/reconciliation/corrections/:id/approve,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,POST,/admin/reconciliation/corrections/:id/reject,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,POST,/admin/reconciliation/corrections/:id/execute-customer-compensation,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+admin.js,GET,/admin/integrity,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+delivery.js,GET,/deliveries/mine,DEAD_CODE_DUPLICATE,buyer/seller/transporter order views all go through /orders and /transporter/missions instead
+delivery.js,POST,/deliveries/assign,DEAD_CODE_DUPLICATE,transporter mission acceptance goes through a different compatibility.js endpoint
+delivery.js,GET,/deliveries/order/:orderId/buyer-proof,DEAD_CODE_DUPLICATE,not called; proof surfaced via /orders/:id detail instead
+delivery.js,GET,/deliveries/order/:orderId/seller-pickup-proof,DEAD_CODE_DUPLICATE,not called; proof surfaced via /orders/:id detail instead
+delivery.js,POST,/deliveries/:id/proof/rotate,DEAD_CODE_DUPLICATE,no frontend caller found
+delivery.js,GET,/deliveries/:id/proof,DEAD_CODE_DUPLICATE,no frontend caller found
+delivery.js,POST,/deliveries/:id/proof/resolve,DEAD_CODE_DUPLICATE,no frontend caller found
+delivery.js,POST,/deliveries/proof/resolve,DEAD_CODE_DUPLICATE,no frontend caller found
+delivery.js,POST,/deliveries/:id/pickup-proof/verify,MATCHED_INDIRECT,reached indirectly: compatibility.js's /transporter/missions/:id/pickup does an internal HTTP 307 redirect to this route
+delivery.js,POST,/deliveries/:id/delivery-proof/verify,MATCHED_INDIRECT,reached indirectly: compatibility.js's /transporter/missions/:id/deliver does an internal loopback fetch to this route
+delivery.js,POST,/deliveries/:id/status,DEAD_CODE_DUPLICATE,order status changes go through /orders/:id/status instead
+delivery.js,POST,/deliveries/:id/delivery-code,DEAD_CODE_DUPLICATE,no frontend caller found
+delivery.js,POST,/deliveries/:id/confirm-reception,DEAD_CODE_DUPLICATE,superseded by POST /orders/:id/confirm-receipt (compatibility.js) — note the different spelling
+delivery.js,POST,/deliveries/:id/release-escrow,DEAD_CODE_DUPLICATE,superseded by escrow release inside POST /orders/:id/confirm-receipt
+webhooks.js,POST,/webhooks/payments/:provider,NO_CALLER_EXPECTED,"called by external payment partner, not by app"
+addresses.js,GET,/addresses,DEAD_CODE_DUPLICATE,superseded by GET /users/me/addresses (compatibility.js)
+addresses.js,POST,/addresses,DEAD_CODE_DUPLICATE,superseded by POST /users/me/addresses (compatibility.js)
+addresses.js,DELETE,/addresses/:id,DEAD_CODE_DUPLICATE,superseded by DELETE /users/me/addresses/:id (compatibility.js)
+kyc.js,GET,/kyc/mine,DEAD_CODE_DUPLICATE,FIXED this session — was shadowing kyc.js's real handler; duplicate removed
+kyc.js,POST,/kyc/documents,DEAD_CODE_DUPLICATE,"superseded by POST /users/me/kyc (compatibility.js) — that one has no document_type enum check, this one does"
+kyc.js,POST,/kyc/documents/:id/access-token,NO_CALLER_EXPECTED,not yet wired to a document-viewer UI
+kyc.js,GET,/kyc/documents/:id/download,NO_CALLER_EXPECTED,not yet wired to a document-viewer UI
+kyc.js,GET,/kyc/admin/pending,ADMIN_UI_GAP,not confirmed wired into admin UI — needs a dedicated check of admin.js + AdminResourceScreen's action map
+kyc.js,POST,/kyc/admin/:id/access-token,NO_CALLER_EXPECTED,not yet wired to admin document-viewer UI
+kyc.js,POST,/kyc/admin/:id/review,ADMIN_UI_GAP,not confirmed wired into admin UI — needs a dedicated check of admin.js + AdminResourceScreen's action map
+chat.js,POST,/chat/conversations,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+notifications.js,GET,/notifications,MATCHED,"features/notifications/notificationsApi.ts (cursor pagination — extraction regex artifact, verified by hand)"
+payouts.js,POST,/payouts/:id/cancel,INCOMPLETE_FEATURE,backend ready; frontend UI not built for this yet
+payouts.js,GET,/payouts/admin/pending,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+payouts.js,POST,/payouts/admin/:id/mark-processing,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+payouts.js,POST,/payouts/admin/:id/fail,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+payouts.js,POST,/payouts/admin/:id/complete,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+finance.js,GET,/finance/summary,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+finance.js,GET,/finance/fee-rule,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+finance.js,POST,/finance/fee-rule,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+finance.js,POST,/finance/orders/:orderId/refund,ADMIN_UI_GAP,backend ready; not exposed in mobile admin UI yet
+features/admin/adminApi.ts,GET,/admin/dashboard,MATCHED,admin.js
+features/wallet/walletApi.ts,GET,/payouts/mine,MATCHED,payouts.js
+backend/livi/src/routes/escrow.js,POST,/escrow/payment/init,MATCHED,Session 10: race condition fixed (SELECT FOR UPDATE now in the same transaction as the UPDATE it protects) and made idempotent — see RAPPORT_AUDIT_SESSION10_FINANCE_KYC.md
+backend/livi/src/routes/kyc.js,POST,/kyc/documents/:id/access-token,NO_CALLER_EXPECTED,"Session 10: fixed to no longer embed role:'admin' on a regular user's own-document token (was a confirmed permission bug, not yet wired to a document-viewer UI per the original audit row above)"
+backend/livi/src/routes/health.js,GET,/ready,MATCHED_NEW,"Session 11: new endpoint (checks DB, migrations applied, schema currency) — /health no longer touches the DB, see RAPPORT_AUDIT_SESSION11_INFRA.md"
+backend/livi/src/routes/compatibility.js,POST,/vendor/products,MATCHED,Session 12: slug conflict (products.slug is globally UNIQUE) now returns 409 PRODUCT_SLUG_ALREADY_EXISTS instead of an uncaught 500 — see RAPPORT_AUDIT_SESSION12_PRODUITS_KYC_STORAGE.md
