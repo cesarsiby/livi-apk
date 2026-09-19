@@ -1,224 +1,1137 @@
-import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useCart } from '../../features/cart/cartStore';
-import { checkoutApi, Address, PaymentMethod, OrderQuote } from '../../features/checkout/checkoutApi';
-import { normalizeList } from '../../services/api/normalize';
-import { Button, Money, Skeleton, formatMoney } from '../../design/components';
-import { colors, fonts, fontSize, radius, spacing } from '../../design/theme';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Animated,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// LIVI 2.0 (RAPPORT_UXUI_SESSION21, feuille de route priorité 1 — bug le
-// plus grave trouvé cette session, constat C0) : GET /users/me/addresses
-// et GET /users/me/payment-methods renvoient tous deux un tableau brut une
-// fois déballé par apiRequest() (mêmes routes que AddressesScreen /
-// PaymentMethodsScreen, routes/compatibility.js, `ok(res, rows)`).
-// `a?.addresses ?? a?.data ?? []` et `p?.payment_methods ?? p?.methods ??
-// p?.data ?? []` retombaient donc toujours sur [] — ce qui, combiné à
-// `disabled={!addresses.length || !payments.length}` sur le bouton de
-// paiement, rendait le checkout DÉFINITIVEMENT IMPOSSIBLE À VALIDER,
-// quelles que soient les adresses/moyens de paiement réellement enregistrés
-// par l'acheteur. Corrigé avec normalizeList().
-//
-// Ajout : explication de la protection des fonds avant paiement (§18 de la
-// mission — "comment la transaction est protégée" devait apparaître dans
-// la hiérarchie du checkout, elle en était absente).
+import { useCart } from '../../features/cart/cartStore';
+
+import {
+  Address,
+  checkoutApi,
+  OrderQuote,
+  PaymentMethod,
+} from '../../features/checkout/checkoutApi';
+
+import { normalizeList } from '../../services/api/normalize';
+
+import {
+  Button,
+  Money,
+  Skeleton,
+} from '../../design/components';
+
+import {
+  colors,
+  fonts,
+  fontSize,
+  radius,
+  shadow,
+  spacing,
+} from '../../design/theme';
+
+function OptionCard({
+  selected,
+  title,
+  subtitle,
+  onPress,
+  disabled = false,
+}: {
+  selected: boolean;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.optionCard,
+        selected && styles.optionCardSelected,
+        disabled && styles.optionCardDisabled,
+        pressed && !disabled && styles.optionCardPressed,
+      ]}
+    >
+      <View
+        style={[
+          styles.optionRadio,
+          selected && styles.optionRadioSelected,
+        ]}
+      >
+        {selected ? (
+          <View style={styles.optionRadioInner} />
+        ) : null}
+      </View>
+
+      <View style={styles.optionContent}>
+        <Text style={styles.optionTitle}>
+          {title}
+        </Text>
+
+        {subtitle ? (
+          <Text style={styles.optionSubtitle}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+
+      {selected ? (
+        <Text style={styles.optionCheck}>✓</Text>
+      ) : null}
+    </Pressable>
+  );
+}
+
 export function CheckoutScreen({ navigation }: any) {
-  const { lines, subtotal, clear } = useCart();
+  const insets = useSafeAreaInsets();
+
+  const {
+    lines,
+    subtotal,
+    clear,
+  } = useCart();
+
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [payments, setPayments] = useState<PaymentMethod[]>([]);
+
   const [addressId, setAddressId] = useState('');
   const [paymentId, setPaymentId] = useState('');
+
+  const [quote, setQuote] =
+    useState<OrderQuote | null>(null);
+
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState('');
-  const [paying, setPaying] = useState(false);
-  const [quote, setQuote] = useState<OrderQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [loadError, setLoadError] = useState('');
+
+  const entrance = useRef(
+    new Animated.Value(0),
+  ).current;
 
   useEffect(() => {
-    if (!lines.length) { navigation.replace('Cart'); return; }
-    Promise.all([checkoutApi.addresses(), checkoutApi.paymentMethods()]).then(([a, p]) => {
-      const aa = normalizeList<Address>(a, ['addresses', 'data']);
-      const pp = normalizeList<PaymentMethod>(p, ['payment_methods', 'methods', 'data']);
-      setAddresses(aa); setPayments(pp);
-      if (aa[0]) setAddressId(String(aa[0].id));
-      if (pp[0]) setPaymentId(String(pp[0].id));
-    }).catch((e) => setLoadError(e?.message ?? 'Impossible de charger le checkout.')).finally(() => setLoading(false));
-  }, []);
+    if (!lines.length) {
+      navigation.replace('Cart');
+      return;
+    }
 
-  // V54 (RAPPORT — "COMMANDE ET FRAIS"): shows the real, server-computed
-  // breakdown (price + distance-based delivery fee = total) as soon as an
-  // address is picked, instead of only the cart subtotal — the delivery fee
-  // used to be hardcoded to 0 and was never shown at all.
+    let mounted = true;
+
+    async function load() {
+      setLoading(true);
+      setLoadError('');
+
+      const [addressResult, paymentResult] =
+        await Promise.allSettled([
+          checkoutApi.addresses(),
+          checkoutApi.paymentMethods(),
+        ]);
+
+      if (!mounted) return;
+
+      if (addressResult.status === 'fulfilled') {
+        const list = normalizeList<Address>(
+          addressResult.value,
+          ['addresses', 'data'],
+        );
+
+        setAddresses(list);
+
+        if (list[0]) {
+          setAddressId(String(list[0].id));
+        }
+      }
+
+      if (paymentResult.status === 'fulfilled') {
+        const list = normalizeList<PaymentMethod>(
+          paymentResult.value,
+          [
+            'payment_methods',
+            'methods',
+            'data',
+          ],
+        );
+
+        setPayments(list);
+
+        if (list[0]) {
+          setPaymentId(String(list[0].id));
+        }
+      }
+
+      const addressFailed =
+        addressResult.status === 'rejected';
+
+      const paymentFailed =
+        paymentResult.status === 'rejected';
+
+      if (addressFailed || paymentFailed) {
+        setLoadError(
+          "Certaines informations n'ont pas pu être chargées. Vous pouvez actualiser l'écran ou compléter ce qui manque.",
+        );
+      }
+
+      setLoading(false);
+    }
+
+    void load();
+
+    return () => {
+      mounted = false;
+    };
+  }, [lines.length, navigation]);
+
   useEffect(() => {
-    if (!addressId || !lines.length) { setQuote(null); return; }
+    if (
+      !addressId ||
+      !lines.length
+    ) {
+      setQuote(null);
+      return;
+    }
+
+    let mounted = true;
+
     setQuoting(true);
-    checkoutApi.quote(lines, addressId)
-      .then(setQuote)
-      .catch(() => setQuote(null))
-      .finally(() => setQuoting(false));
+
+    checkoutApi
+      .quote(lines, addressId)
+      .then((result) => {
+        if (mounted) {
+          setQuote(result);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setQuote(null);
+        }
+      })
+      .finally(() => {
+        if (mounted) {
+          setQuoting(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [addressId, lines]);
 
+  useEffect(() => {
+    if (loading) return;
+
+    Animated.spring(entrance, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 11,
+      bounciness: 2,
+    }).start();
+
+    return () => {
+      entrance.stopAnimation();
+    };
+  }, [entrance, loading]);
+
   async function pay() {
-    if (!addressId || !paymentId) { Alert.alert('Checkout', 'Sélectionnez une adresse et un moyen de paiement.'); return; }
+    if (!addressId || !paymentId) {
+      return;
+    }
+
     try {
       setPaying(true);
-      const order = await checkoutApi.createOrder(lines, addressId, paymentId);
-      const orderId = (order as any)?.id ?? (order as any)?.order?.id;
-      if (!orderId) throw new Error("La commande n'a pas retourné d'identifiant.");
-      // V54: was `subtotal` (cart-only, no delivery fee) — the amount sent
-      // to payment initiation must match the order's real total_amount
-      // (product price + delivery fee), which the backend now computes
-      // authoritatively and returns on the created order.
-      const amount = Number((order as any)?.total_amount ?? quote?.total_xof ?? subtotal);
-      const payment = await checkoutApi.initPayment(String(orderId), amount, paymentId);
-      const ref = (payment as any)?.reference ?? (payment as any)?.payment_reference ?? (payment as any)?.id;
-      if (!ref) throw new Error("Le paiement n'a pas retourné de référence.");
+
+      const order =
+        await checkoutApi.createOrder(
+          lines,
+          addressId,
+          paymentId,
+        );
+
+      const orderId =
+        (order as any)?.id ??
+        (order as any)?.order?.id;
+
+      if (!orderId) {
+        throw new Error(
+          "La commande n'a pas retourné d'identifiant.",
+        );
+      }
+
+      const amount = Number(
+        (order as any)?.total_amount ??
+          quote?.total_xof ??
+          subtotal,
+      );
+
+      const payment =
+        await checkoutApi.initPayment(
+          String(orderId),
+          amount,
+          paymentId,
+        );
+
+      const reference =
+        (payment as any)?.reference ??
+        (payment as any)?.payment_reference ??
+        (payment as any)?.id;
+
+      if (!reference) {
+        throw new Error(
+          "Le paiement n'a pas retourné de référence.",
+        );
+      }
+
       clear();
-      navigation.replace('OrderDetails', { orderId });
-    } catch (e: any) {
-      Alert.alert('Paiement impossible', e?.message ?? "Impossible d'initialiser le paiement.");
+
+      navigation.replace(
+        'OrderDetails',
+        {
+          orderId,
+        },
+      );
+    } catch (error: any) {
+      // L'écran parent peut gérer les erreurs globales.
+      // On conserve ici un message visible dans le flux.
+      setLoadError(
+        error?.message ??
+          "Le paiement n'a pas pu être initialisé. Vos informations n'ont pas été perdues.",
+      );
     } finally {
       setPaying(false);
     }
   }
 
-  // SESSION 26 (améliorations UX/UI) : dernier des 3 écrans encore sur
-  // l'ancien motif ActivityIndicator plein écran, repéré par recherche
-  // systématique (avec InventoryScreen et MissionsScreen). Ce chargement
-  // initial (adresses + moyens de paiement) est distinct du "…" affiché
-  // pendant le recalcul du devis plus bas — celui-ci reste inchangé,
-  // approprié pour une mise à jour rapide plutôt qu'un premier chargement.
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Skeleton height={64} radius={radius.lg} />
-        <Skeleton height={64} radius={radius.lg} />
-        <Skeleton height={120} radius={radius.lg} />
+      <View style={styles.loadingScreen}>
+        <Skeleton
+          height={34}
+          width="55%"
+          radius={radius.sm}
+        />
+
+        <Skeleton
+          height={160}
+          radius={radius.xl}
+        />
+
+        <Skeleton
+          height={150}
+          radius={radius.xl}
+        />
+
+        <Skeleton
+          height={130}
+          radius={radius.xl}
+        />
+
+        <Skeleton
+          height={54}
+          radius={radius.full}
+        />
       </View>
     );
   }
 
+  const total = quote?.total_xof ?? subtotal;
+
+  const hasAddress = addresses.length > 0;
+  const hasPayment = payments.length > 0;
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Checkout sécurisé</Text>
-      {loadError ? <Text style={styles.error}>{loadError}</Text> : null}
-
-      <View style={styles.breakdown}>
-        <View style={styles.breakdownRow}>
-          <Text style={styles.breakdownLabel}>Sous-total produits</Text>
-          <Text style={styles.breakdownValue}>{formatMoney(quote?.subtotal_xof ?? subtotal)}</Text>
-        </View>
-        <View style={styles.breakdownRow}>
-          <Text style={styles.breakdownLabel}>Frais de livraison{quote?.distance_km != null ? ` (${quote.distance_km.toFixed(1)} km)` : ''}</Text>
-          <Text style={styles.breakdownValue}>{quoting ? '…' : quote ? formatMoney(quote.shipping_fee_xof) : '—'}</Text>
-        </View>
-        <View style={[styles.breakdownRow, styles.breakdownTotalRow]}>
-          <Text style={styles.total}>Total à payer</Text>
-          <Money amount={quote ? quote.total_xof : subtotal} size="lg" color={colors.gold} />
-        </View>
-      </View>
-
-      <Text style={styles.section}>Adresse de livraison</Text>
-      {addresses.length === 0 ? (
-        <Pressable style={styles.emptyLink} onPress={() => navigation.navigate('Addresses')}>
-          <Text style={styles.emptyLinkText}>+ Ajouter une adresse de livraison</Text>
-        </Pressable>
-      ) : addresses.map((a) => (
-        <Pressable
-          key={a.id}
-          onPress={() => setAddressId(String(a.id))}
-          style={[styles.option, addressId === String(a.id) && styles.selected]}
+    <View style={styles.screen}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom:
+              insets.bottom + 150,
+          },
+        ]}
+      >
+        <Animated.View
+          style={[
+            styles.inner,
+            {
+              opacity: entrance,
+              transform: [
+                {
+                  translateY:
+                    entrance.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [14, 0],
+                    }),
+                },
+              ],
+            },
+          ]}
         >
-          <Text style={styles.bold}>{a.label ?? a.name ?? 'Adresse'}</Text>
-          <Text style={styles.meta}>{a.address ?? (a as any).address_line ?? a.line1 ?? a.city ?? ''}</Text>
-        </Pressable>
-      ))}
+          <View style={styles.header}>
+            <Text style={styles.kicker}>
+              LIVI
+            </Text>
 
-      <Text style={styles.section}>Mode de paiement</Text>
-      {payments.length === 0 ? (
-        <Pressable style={styles.emptyLink} onPress={() => navigation.navigate('PaymentMethods')}>
-          <Text style={styles.emptyLinkText}>+ Ajouter un moyen de paiement</Text>
-        </Pressable>
-      ) : payments.map((p) => (
-        <Pressable
-          key={p.id}
-          onPress={() => setPaymentId(String(p.id))}
-          style={[styles.option, paymentId === String(p.id) && styles.selected]}
-        >
-          <Text style={styles.bold}>{p.label ?? p.type ?? 'Moyen de paiement'}</Text>
-          <Text style={styles.meta}>{p.last4 ? `•••• ${p.last4}` : ''}</Text>
-        </Pressable>
-      ))}
+            <Text style={styles.title}>
+              Finaliser la commande
+            </Text>
 
-      <View style={styles.protection}>
-        <Text style={styles.protectionIcon}>🔒</Text>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.protectionTitle}>Paiement protégé</Text>
-          <Text style={styles.protectionText}>Votre argent est retenu par LIVI jusqu'à la confirmation de réception — le vendeur n'est payé qu'une fois la commande bien arrivée.</Text>
+            <Text style={styles.subtitle}>
+              Encore quelques détails et votre commande sera prête.
+            </Text>
+          </View>
+
+          {loadError ? (
+            <View style={styles.feedback}>
+              <View style={styles.feedbackMark}>
+                <Text style={styles.feedbackMarkText}>
+                  !
+                </Text>
+              </View>
+
+              <View style={styles.feedbackText}>
+                <Text style={styles.feedbackTitle}>
+                  Un petit contretemps
+                </Text>
+
+                <Text style={styles.feedbackBody}>
+                  {loadError}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={styles.summaryCard}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>
+                  Résumé
+                </Text>
+
+                <Text style={styles.sectionSubtitle}>
+                  Le montant final est calculé par LIVI.
+                </Text>
+              </View>
+
+              {quoting ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colors.gold}
+                />
+              ) : null}
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>
+                Produits
+              </Text>
+
+              <Money
+                amount={
+                  quote?.subtotal_xof ??
+                  subtotal
+                }
+                currency="FCFA"
+                size="sm"
+                color={colors.textPrimary}
+              />
+            </View>
+
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>
+                Livraison
+              </Text>
+
+              {quote ? (
+                <Money
+                  amount={quote.shipping_fee_xof}
+                  currency="FCFA"
+                  size="sm"
+                  color={colors.textPrimary}
+                />
+              ) : (
+                <Text style={styles.pendingValue}>
+                  Calcul…
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.totalDivider} />
+
+            <View style={styles.totalRow}>
+              <View>
+                <Text style={styles.totalLabel}>
+                  Total
+                </Text>
+
+                <Text style={styles.totalHint}>
+                  {quote?.distance_km != null
+                    ? `${quote.distance_km.toFixed(1)} km de livraison`
+                    : 'Montant final de la commande'}
+                </Text>
+              </View>
+
+              <Money
+                amount={total}
+                currency="FCFA"
+                size="lg"
+                color={colors.gold2}
+              />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionTitleWrap}>
+              <View style={styles.stepCircle}>
+                <Text style={styles.stepNumber}>
+                  1
+                </Text>
+              </View>
+
+              <View>
+                <Text style={styles.sectionTitle}>
+                  Livraison
+                </Text>
+
+                <Text style={styles.sectionSubtitle}>
+                  Où souhaitez-vous recevoir votre commande ?
+                </Text>
+              </View>
+            </View>
+
+            {hasAddress ? (
+              <View style={styles.options}>
+                {addresses.map((address) => {
+                  const selected =
+                    addressId ===
+                    String(address.id);
+
+                  const title =
+                    address.label ??
+                    address.name ??
+                    'Adresse de livraison';
+
+                  const subtitle =
+                    address.address ??
+                    address.line1 ??
+                    address.city ??
+                    '';
+
+                  return (
+                    <OptionCard
+                      key={address.id}
+                      selected={selected}
+                      title={title}
+                      subtitle={subtitle}
+                      onPress={() =>
+                        setAddressId(
+                          String(address.id),
+                        )
+                      }
+                    />
+                  );
+                })}
+              </View>
+            ) : (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate(
+                    'Addresses',
+                  )
+                }
+                style={styles.addCard}
+              >
+                <View style={styles.addIcon}>
+                  <Text style={styles.addIconText}>
+                    +
+                  </Text>
+                </View>
+
+                <View style={styles.addContent}>
+                  <Text style={styles.addTitle}>
+                    Ajouter une adresse
+                  </Text>
+
+                  <Text style={styles.addSubtitle}>
+                    Indiquez où nous devons livrer votre commande.
+                  </Text>
+                </View>
+
+                <Text style={styles.addArrow}>
+                  →
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionTitleWrap}>
+              <View style={styles.stepCircle}>
+                <Text style={styles.stepNumber}>
+                  2
+                </Text>
+              </View>
+
+              <View>
+                <Text style={styles.sectionTitle}>
+                  Paiement
+                </Text>
+
+                <Text style={styles.sectionSubtitle}>
+                  Choisissez le moyen de paiement enregistré.
+                </Text>
+              </View>
+            </View>
+
+            {hasPayment ? (
+              <View style={styles.options}>
+                {payments.map((payment) => {
+                  const selected =
+                    paymentId ===
+                    String(payment.id);
+
+                  const title =
+                    payment.label ??
+                    payment.type ??
+                    'Moyen de paiement';
+
+                  const subtitle =
+                    payment.last4
+                      ? `•••• ${payment.last4}`
+                      : 'Moyen de paiement enregistré';
+
+                  return (
+                    <OptionCard
+                      key={payment.id}
+                      selected={selected}
+                      title={title}
+                      subtitle={subtitle}
+                      onPress={() =>
+                        setPaymentId(
+                          String(payment.id),
+                        )
+                      }
+                    />
+                  );
+                })}
+              </View>
+            ) : (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate(
+                    'PaymentMethods',
+                  )
+                }
+                style={styles.addCard}
+              >
+                <View style={styles.addIcon}>
+                  <Text style={styles.addIconText}>
+                    +
+                  </Text>
+                </View>
+
+                <View style={styles.addContent}>
+                  <Text style={styles.addTitle}>
+                    Ajouter un moyen de paiement
+                  </Text>
+
+                  <Text style={styles.addSubtitle}>
+                    Enregistrez votre moyen de paiement pour poursuivre.
+                  </Text>
+                </View>
+
+                <Text style={styles.addArrow}>
+                  →
+                </Text>
+              </Pressable>
+            )}
+          </View>
+
+          <View style={styles.trustCard}>
+            <View style={styles.trustIcon}>
+              <Text style={styles.trustIconText}>
+                ✓
+              </Text>
+            </View>
+
+            <View style={styles.trustContent}>
+              <Text style={styles.trustTitle}>
+                Vos fonds restent protégés
+              </Text>
+
+              <Text style={styles.trustText}>
+                LIVI sécurise la transaction jusqu’à la confirmation de réception.
+                Le vendeur n’est payé qu’une fois la commande correctement livrée.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.finalNote}>
+            <Text style={styles.finalNoteTitle}>
+              Vous gardez le contrôle
+            </Text>
+
+            <Text style={styles.finalNoteText}>
+              Vérifiez l’adresse, le paiement et le montant avant de confirmer.
+            </Text>
+          </View>
+        </Animated.View>
+      </ScrollView>
+
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            paddingBottom:
+              Math.max(insets.bottom, spacing[4]) +
+              spacing[1],
+          },
+        ]}
+      >
+        <View style={styles.bottomSummary}>
+          <Text style={styles.bottomLabel}>
+            Total à payer
+          </Text>
+
+          <Money
+            amount={total}
+            currency="FCFA"
+            size="md"
+            color={colors.white}
+          />
         </View>
-      </View>
 
-      <Button
-        title={paying ? 'Traitement…' : 'Payer et sécuriser la commande'}
-        disabled={paying || !addresses.length || !payments.length}
-        loading={paying}
-        onPress={pay}
-        size="lg"
-        fullWidth
-      />
+        <Button
+          title={
+            paying
+              ? 'Sécurisation en cours…'
+              : 'Payer et sécuriser'
+          }
+          disabled={
+            paying ||
+            !addressId ||
+            !paymentId
+          }
+          loading={paying}
+          onPress={pay}
+          size="lg"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.dark, padding: spacing[4], gap: spacing[3] },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.dark },
-  title: { fontFamily: fonts.brand, fontSize: fontSize['3xl'], color: colors.textPrimary },
-  breakdown: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.dark3,
-    padding: spacing[4],
+  screen: {
+    flex: 1,
+    backgroundColor: colors.dark,
+  },
+
+  content: {
+    paddingHorizontal: spacing[5],
+  },
+
+  inner: {
+    gap: spacing[5],
+  },
+
+  loadingScreen: {
+    flex: 1,
+    backgroundColor: colors.dark,
+    padding: spacing[5],
+    gap: spacing[4],
+  },
+
+  header: {
+    paddingTop: spacing[5],
     gap: spacing[2],
   },
-  breakdownRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  breakdownLabel: { fontFamily: fonts.body, color: colors.gray2, fontSize: fontSize.sm },
-  breakdownValue: { fontFamily: fonts.bodySemibold, color: colors.textPrimary, fontSize: fontSize.sm },
-  breakdownTotalRow: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing[2], marginTop: spacing[1] },
-  total: { fontFamily: fonts.brandSemibold, fontSize: fontSize.xl, color: colors.gold },
-  section: { fontFamily: fonts.brandSemibold, fontSize: fontSize.lg, color: colors.textPrimary, marginTop: spacing[2] },
-  option: {
-    padding: spacing[4],
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.dark3,
+
+  kicker: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
+    letterSpacing: 2,
+    color: colors.gold,
   },
-  selected: { borderColor: colors.gold, borderWidth: 2, backgroundColor: colors.goldDim },
-  bold: { fontFamily: fonts.bodySemibold, color: colors.textPrimary },
-  meta: { fontFamily: fonts.body, color: colors.gray2, fontSize: fontSize.sm, marginTop: 2 },
-  error: { color: colors.red, fontFamily: fonts.body },
-  emptyLink: {
-    padding: spacing[4],
-    borderWidth: 1,
-    borderColor: colors.goldBorder,
-    borderStyle: 'dashed',
-    borderRadius: radius.md,
-    alignItems: 'center',
+
+  title: {
+    fontFamily: fonts.brand,
+    fontSize: fontSize['3xl'],
+    lineHeight: 35,
+    color: colors.textPrimary,
   },
-  emptyLinkText: { color: colors.gold, fontFamily: fonts.bodySemibold },
-  protection: {
+
+  subtitle: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    color: colors.textMuted,
+    maxWidth: 340,
+  },
+
+  feedback: {
     flexDirection: 'row',
     gap: spacing[3],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.redDim,
+    borderWidth: 1,
+    borderColor: colors.redBorder,
+  },
+
+  feedbackMark: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.full,
+    backgroundColor: colors.red,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  feedbackMarkText: {
+    fontFamily: fonts.bodyBold,
+    color: colors.white,
+    fontSize: fontSize.sm,
+  },
+
+  feedbackText: {
+    flex: 1,
+    gap: 2,
+  },
+
+  feedbackTitle: {
+    fontFamily: fonts.bodySemibold,
+    color: colors.textPrimary,
+    fontSize: fontSize.sm,
+  },
+
+  feedbackBody: {
+    fontFamily: fonts.body,
+    color: colors.textSecondary,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
+  },
+
+  summaryCard: {
+    padding: spacing[5],
+    borderRadius: radius['2xl'],
     backgroundColor: colors.dark3,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing[4],
-    marginTop: spacing[2],
-    alignItems: 'flex-start',
+    ...shadow.md,
+    gap: spacing[3],
   },
-  protectionIcon: { fontSize: fontSize.lg },
-  protectionTitle: { fontFamily: fonts.bodySemibold, color: colors.textPrimary, fontSize: fontSize.sm },
-  protectionText: { fontFamily: fonts.body, color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2, lineHeight: 16 },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+  },
+
+  sectionTitle: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.textPrimary,
+  },
+
+  sectionSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  summaryLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+
+  pendingValue: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+
+  totalDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing[1],
+  },
+
+  totalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+  },
+
+  totalLabel: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.md,
+    color: colors.textPrimary,
+  },
+
+  totalHint: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  section: {
+    gap: spacing[3],
+  },
+
+  sectionTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+
+  stepCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  stepNumber: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.sm,
+    color: colors.gold2,
+  },
+
+  options: {
+    gap: spacing[2],
+  },
+
+  optionCard: {
+    minHeight: 76,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  optionCardSelected: {
+    backgroundColor: colors.goldDim,
+    borderColor: colors.gold,
+  },
+
+  optionCardDisabled: {
+    opacity: 0.45,
+  },
+
+  optionCardPressed: {
+    opacity: 0.86,
+  },
+
+  optionRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: radius.full,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  optionRadioSelected: {
+    borderColor: colors.gold,
+  },
+
+  optionRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: radius.full,
+    backgroundColor: colors.gold,
+  },
+
+  optionContent: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+
+  optionTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  optionSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
+    color: colors.textMuted,
+  },
+
+  optionCheck: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.md,
+    color: colors.gold2,
+  },
+
+  addCard: {
+    minHeight: 78,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
+
+  addIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  addIconText: {
+    fontFamily: fonts.bodyMedium,
+    fontSize: fontSize.xl,
+    color: colors.gold2,
+  },
+
+  addContent: {
+    flex: 1,
+    gap: 2,
+  },
+
+  addTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  addSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 16,
+    color: colors.textMuted,
+  },
+
+  addArrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.lg,
+    color: colors.gold2,
+  },
+
+  trustCard: {
+    flexDirection: 'row',
+    gap: spacing[3],
+    padding: spacing[5],
+    borderRadius: radius.xl,
+    backgroundColor: colors.goldDim,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
+
+  trustIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.gold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  trustIconText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.md,
+    color: colors.dark,
+  },
+
+  trustContent: {
+    flex: 1,
+    gap: 2,
+  },
+
+  trustTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  trustText: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 17,
+    color: colors.textSecondary,
+  },
+
+  finalNote: {
+    paddingBottom: spacing[2],
+    gap: 2,
+  },
+
+  finalNoteTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+
+  finalNoteText: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+
+  bottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[3],
+    backgroundColor: 'rgba(8, 15, 26, 0.97)',
+    borderTopWidth: 1,
+    borderTopColor: colors.borderStrong,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+    ...shadow.lg,
+  },
+
+  bottomSummary: {
+    flex: 1,
+    gap: 2,
+  },
+
+  bottomLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
 });
