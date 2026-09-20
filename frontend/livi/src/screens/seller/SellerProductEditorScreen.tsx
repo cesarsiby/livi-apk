@@ -628,8 +628,7 @@ export function SellerProductEditorScreen({
               } finally {
                 setBusy(false);
               }
-            },
-          },
+            },   
         ],
       );
     };
