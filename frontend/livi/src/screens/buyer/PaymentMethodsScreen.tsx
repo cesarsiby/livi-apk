@@ -837,4 +837,585 @@ export function PaymentMethodsScreen() {
   );
 }
 
-const styles = Styl
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.dark,
+  },
+
+  container: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[12],
+  },
+
+  loadingScreen: {
+    flex: 1,
+    padding: spacing[5],
+    gap: spacing[4],
+    backgroundColor: colors.dark,
+  },
+
+  header: {
+    marginBottom: spacing[5],
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+  },
+
+  headerCopy: {
+    flex: 1,
+  },
+
+  eyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.7,
+    color: colors.gold,
+  },
+
+  title: {
+    marginTop: 2,
+    fontFamily: fonts.brand,
+    fontSize: fontSize['3xl'],
+    lineHeight: 36,
+    color: colors.textPrimary,
+  },
+
+  subtitle: {
+    marginTop: spacing[2],
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    lineHeight: 19,
+    color: colors.textMuted,
+  },
+
+  countBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  countNumber: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.gold,
+  },
+
+  addButton: {
+    minHeight: 78,
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.gold,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  addIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: radius.full,
+    backgroundColor: colors.dark,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  addIconText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xl,
+    color: colors.gold,
+  },
+
+  addContent: {
+    flex: 1,
+    marginLeft: spacing[3],
+  },
+
+  addTitle: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.sm,
+    color: colors.dark,
+  },
+
+  addSubtitle: {
+    marginTop: 2,
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.dark,
+    opacity: 0.65,
+  },
+
+  addArrow: {
+    marginLeft: spacing[3],
+    fontFamily: fonts.body,
+    fontSize: fontSize['2xl'],
+    color: colors.dark,
+  },
+
+  errorBox: {
+    marginTop: spacing[4],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.redDim,
+    borderWidth: 1,
+    borderColor: colors.redBorder,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+
+  errorText: {
+    flex: 1,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 17,
+    color: colors.red,
+  },
+
+  retryText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
+    color: colors.gold,
+  },
+
+  securityNote: {
+    marginTop: spacing[4],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+
+  securityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  securityIconText: {
+    fontFamily: fonts.bodyBold,
+    color: colors.gold,
+  },
+
+  securityContent: {
+    flex: 1,
+  },
+
+  securityTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  securityText: {
+    marginTop: 3,
+    fontFamily: fonts.body,
+    fontSize: 10,
+    lineHeight: 15,
+    color: colors.textMuted,
+  },
+
+  section: {
+    marginTop: spacing[6],
+  },
+
+  sectionHeader: {
+    marginBottom: spacing[3],
+  },
+
+  sectionTitle: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.textPrimary,
+  },
+
+  sectionSubtitle: {
+    marginTop: 3,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 17,
+    color: colors.textMuted,
+  },
+
+  methodsList: {
+    gap: spacing[3],
+  },
+
+  methodCard: {
+    padding: spacing[5],
+    borderRadius: radius['2xl'],
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  methodCardPressed: {
+    opacity: 0.92,
+  },
+
+  methodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+
+  operatorMark: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.lg,
+    backgroundColor: colors.goldDim,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  operatorMarkText: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.gold,
+  },
+
+  methodIdentity: {
+    flex: 1,
+  },
+
+  methodTitle: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.base,
+    color: colors.textPrimary,
+  },
+
+  methodNumber: {
+    marginTop: 3,
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+  },
+
+  defaultBadge: {
+    paddingHorizontal: spacing[2],
+    paddingVertical: spacing[2],
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
+
+  defaultBadgeText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 8,
+    letterSpacing: 0.6,
+    color: colors.gold,
+  },
+
+  methodFooter: {
+    marginTop: spacing[4],
+    paddingTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+  },
+
+  methodAction: {
+    paddingVertical: spacing[1],
+  },
+
+  methodActionText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
+    color: colors.gold,
+  },
+
+  removeText: {
+    color: colors.red,
+  },
+
+  defaultHint: {
+    flex: 1,
+  },
+
+  defaultHintText: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.textMuted,
+  },
+
+  emptyWrapper: {
+    minHeight: 360,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  modalScreen: {
+    flex: 1,
+    backgroundColor: colors.dark,
+  },
+
+  modalHeader: {
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+
+  modalEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 8,
+    letterSpacing: 1.5,
+    color: colors.gold,
+  },
+
+  modalTitle: {
+    marginTop: 2,
+    fontFamily: fonts.brand,
+    fontSize: fontSize.xl,
+    color: colors.textPrimary,
+  },
+
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    backgroundColor: colors.dark3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  closeText: {
+    marginTop: -2,
+    fontFamily: fonts.body,
+    fontSize: 27,
+    color: colors.textMuted,
+  },
+
+  modalContent: {
+    padding: spacing[5],
+    paddingBottom: spacing[10],
+  },
+
+  modalError: {
+    marginBottom: spacing[4],
+    padding: spacing[3],
+    borderRadius: radius.lg,
+    backgroundColor: colors.redDim,
+    borderWidth: 1,
+    borderColor: colors.redBorder,
+  },
+
+  introCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: 'row',
+    gap: spacing[3],
+  },
+
+  introIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  introIconText: {
+    fontFamily: fonts.bodyBold,
+    color: colors.gold,
+  },
+
+  introContent: {
+    flex: 1,
+  },
+
+  introTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  introText: {
+    marginTop: 3,
+    fontFamily: fonts.body,
+    fontSize: 10,
+    lineHeight: 16,
+    color: colors.textMuted,
+  },
+
+  formCard: {
+    marginBottom: spacing[4],
+    padding: spacing[5],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  field: {
+    marginBottom: spacing[4],
+  },
+
+  fieldLabel: {
+    marginBottom: spacing[2],
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+
+  input: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    backgroundColor: colors.dark4,
+    paddingHorizontal: spacing[4],
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+  },
+
+  defaultOption: {
+    padding: spacing[3],
+    borderRadius: radius.lg,
+    backgroundColor: colors.dark4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
+  },
+
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: radius.sm,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  checkboxActive: {
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
+  },
+
+  checkboxText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 10,
+    color: colors.dark,
+  },
+
+  defaultOptionText: {
+    flex: 1,
+  },
+
+  defaultOptionTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.xs,
+    color: colors.textPrimary,
+  },
+
+  defaultOptionSubtitle: {
+    marginTop: 2,
+    fontFamily: fonts.body,
+    fontSize: 10,
+    lineHeight: 15,
+    color: colors.textMuted,
+  },
+
+  otpCard: {
+    alignItems: 'center',
+    marginBottom: spacing[4],
+    padding: spacing[6],
+    borderRadius: radius['2xl'],
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+  },
+
+  otpCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  otpCircleText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.lg,
+    color: colors.gold,
+  },
+
+  otpTitle: {
+    marginTop: spacing[4],
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.textPrimary,
+  },
+
+  otpSubtitle: {
+    marginTop: spacing[2],
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    lineHeight: 19,
+    textAlign: 'center',
+    color: colors.textMuted,
+  },
+
+  otpNumber: {
+    marginTop: spacing[3],
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.gold,
+  },
+
+  resendButton: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing[2],
+  },
+
+  resendText: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.gold,
+  },
+
+  cancelButton: {
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing[2],
+  },
+
+  cancelText: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+  },
+});
