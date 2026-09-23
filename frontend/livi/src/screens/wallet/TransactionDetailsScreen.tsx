@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -13,6 +14,7 @@ import type { WalletTransaction } from '../../features/wallet/types';
 
 import {
   Money,
+  Screen,
   Skeleton,
   StatusBadge,
 } from '../../design/components';
@@ -25,35 +27,67 @@ import {
   spacing,
 } from '../../design/theme';
 
+function formatDateTime(value?: string | null) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString('fr-FR');
+}
+
+function DetailRow({
+  label,
+  value,
+  last = false,
+}: {
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
+  return (
+    <View style={[styles.detailRow, !last && styles.detailRowBorder]}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue} numberOfLines={3}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 export function TransactionDetailsScreen({
   route,
   navigation,
 }: any) {
-  const id = String(route.params?.transactionId ?? '');
+  const id = route?.params?.transactionId
+    ? String(route.params.transactionId)
+    : '';
 
-  const [item, setItem] =
-    useState<WalletTransaction | null>(null);
-
+  const [item, setItem] = useState<WalletTransaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
+
+  const entrance = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(
     async (isRefresh = false) => {
+      if (!id) {
+        setError('Transaction introuvable.');
+        setLoading(false);
+        return;
+      }
+
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
+
+      setError('');
+
       try {
-        if (isRefresh) setRefreshing(true);
-        else setLoading(true);
-
-        setError(null);
-
-        const result =
-          await walletApi.getTransaction(id);
-
-        setItem(result);
+        setItem(await walletApi.getTransaction(id));
       } catch (e: any) {
         setError(
-          e?.message ??
-            'Impossible de charger la transaction.',
+          e?.message ?? 'Impossible de charger la transaction.',
         );
       } finally {
         setLoading(false);
@@ -64,151 +98,239 @@ export function TransactionDetailsScreen({
   );
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
+  useEffect(() => {
+    Animated.timing(entrance, {
+      toValue: 1,
+      duration: 380,
+      useNativeDriver: true,
+    }).start();
+  }, [entrance]);
+
+  const translateY = entrance.interpolate({
+    inputRange: [0, 1],
+    outputRange: [12, 0],
+  });
+
   return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={styles.container}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => load(true)}
-          tintColor={colors.gold}
-        />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>WALLET LIVI</Text>
-        <Text style={styles.title}>Transaction</Text>
-      </View>
+    <Screen>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load(true)}
+            tintColor={colors.gold}
+          />
+        }
+      >
+        <Animated.View
+          style={{
+            opacity: entrance,
+            transform: [{ translateY }],
+          }}
+        >
+          <View style={styles.header}>
+            <Pressable
+              onPress={() => navigation.goBack()}
+              style={({ pressed }) => [
+                styles.backButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.backIcon}>‹</Text>
+              <Text style={styles.backText}>Retour</Text>
+            </Pressable>
 
-      {loading ? (
-        <Skeleton
-          height={300}
-          radius={radius['2xl']}
-        />
-      ) : error ? (
-        <View style={styles.errorCard}>
-          <Text style={styles.error}>{error}</Text>
-          <Pressable onPress={() => load()}>
-            <Text style={styles.retry}>Réessayer</Text>
-          </Pressable>
-        </View>
-      ) : item ? (
-        <View style={styles.card}>
-          <View style={styles.hero}>
-            <Text style={styles.heroLabel}>
-              Montant
+            <Text style={styles.eyebrow}>WALLET LIVI</Text>
+            <Text style={styles.title}>Transaction</Text>
+            <Text style={styles.subtitle}>
+              Détails de l’opération retournés par le service financier.
             </Text>
-
-            <Money
-              amount={item.amount}
-              currency={item.currency}
-              size="xl"
-              color={colors.textPrimary}
-            />
-
-            <StatusBadge
-              domain="escrow"
-              status={item.status}
-            />
           </View>
 
-          {item.description ? (
-            <View style={styles.descriptionBox}>
-              <Text style={styles.description}>
-                {item.description}
+          {loading ? (
+            <View style={styles.loadingStack}>
+              <Skeleton height={250} radius={radius['2xl']} />
+              <Skeleton height={210} radius={radius.xl} />
+            </View>
+          ) : error ? (
+            <View style={styles.errorCard}>
+              <View style={styles.errorIcon}>
+                <Text style={styles.errorIconText}>!</Text>
+              </View>
+
+              <View style={styles.errorCopy}>
+                <Text style={styles.errorTitle}>
+                  Transaction indisponible
+                </Text>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+
+              <Pressable
+                onPress={() => load()}
+                style={styles.retryButton}
+              >
+                <Text style={styles.retryText}>Réessayer</Text>
+              </Pressable>
+            </View>
+          ) : !item ? (
+            <View style={styles.emptyCard}>
+              <View style={styles.emptyIcon}>
+                <Text style={styles.emptyIconText}>·</Text>
+              </View>
+              <Text style={styles.emptyTitle}>
+                Transaction introuvable
+              </Text>
+              <Text style={styles.emptyText}>
+                Le service financier n’a pas retourné cette opération.
               </Text>
             </View>
-          ) : null}
+          ) : (
+            <>
+              <View style={styles.heroCard}>
+                <Text style={styles.heroEyebrow}>MONTANT</Text>
 
-          <View style={styles.divider} />
+                <Money
+                  amount={item.amount}
+                  currency={item.currency}
+                  size="xl"
+                  color={colors.textPrimary}
+                />
 
-          <DetailLine
-            label="Référence"
-            value={item.reference ?? item.id}
-          />
+                <View style={styles.heroStatus}>
+                  <StatusBadge
+                    domain="escrow"
+                    status={item.status}
+                  />
+                </View>
 
-          {item.created_at ? (
-            <DetailLine
-              label="Créée le"
-              value={new Date(
-                item.created_at,
-              ).toLocaleString('fr-FR')}
-            />
-          ) : null}
+                {item.description ? (
+                  <Text style={styles.description}>
+                    {item.description}
+                  </Text>
+                ) : null}
 
-          {item.completed_at ? (
-            <DetailLine
-              label="Terminée le"
-              value={new Date(
-                item.completed_at,
-              ).toLocaleString('fr-FR')}
-            />
-          ) : null}
+                <View style={styles.heroDivider} />
 
-          {item.type ? (
-            <DetailLine
-              label="Type"
-              value={item.type}
-            />
-          ) : null}
-        </View>
-      ) : null}
+                <View style={styles.referenceBlock}>
+                  <Text style={styles.referenceLabel}>
+                    RÉFÉRENCE
+                  </Text>
+                  <Text style={styles.referenceValue}>
+                    {item.reference ?? item.id}
+                  </Text>
+                </View>
+              </View>
 
-      <Pressable
-        onPress={() =>
-          navigation.navigate('Transactions')
-        }
-        style={styles.backLink}
-      >
-        <Text style={styles.backText}>
-          Voir toutes les transactions
-        </Text>
-      </Pressable>
-    </ScrollView>
-  );
-}
+              <View style={styles.detailsCard}>
+                <Text style={styles.sectionEyebrow}>INFORMATIONS</Text>
 
-function DetailLine({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.detailLine}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value}</Text>
-    </View>
+                <DetailRow
+                  label="Statut"
+                  value={item.status || '—'}
+                />
+
+                {item.type ? (
+                  <DetailRow
+                    label="Type"
+                    value={item.type}
+                  />
+                ) : null}
+
+                {item.created_at ? (
+                  <DetailRow
+                    label="Créée le"
+                    value={formatDateTime(item.created_at)}
+                  />
+                ) : null}
+
+                {item.completed_at ? (
+                  <DetailRow
+                    label="Terminée le"
+                    value={formatDateTime(item.completed_at)}
+                  />
+                ) : null}
+
+                <DetailRow
+                  label="Identifiant"
+                  value={String(item.id)}
+                  last
+                />
+              </View>
+            </>
+          )}
+
+          <Pressable
+            onPress={() => navigation.navigate('Transactions')}
+            style={({ pressed }) => [
+              styles.historyLink,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.historyLinkText}>
+              Voir toutes les transactions
+            </Text>
+            <Text style={styles.historyArrow}>→</Text>
+          </Pressable>
+        </Animated.View>
+      </ScrollView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.dark,
-  },
-
-  container: {
+  content: {
     paddingHorizontal: spacing[5],
-    paddingTop: spacing[5],
+    paddingTop: spacing[4],
     paddingBottom: spacing[12],
-    gap: spacing[4],
   },
 
   header: {
     gap: spacing[1],
+    marginBottom: spacing[5],
+  },
+
+  backButton: {
+    alignSelf: 'flex-start',
+    minHeight: 36,
+    paddingHorizontal: spacing[3],
+    paddingRight: spacing[4],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.dark3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+    marginBottom: spacing[3],
+  },
+
+  backIcon: {
+    marginTop: -2,
+    fontFamily: fonts.body,
+    fontSize: 28,
+    lineHeight: 28,
+    color: colors.textPrimary,
+  },
+
+  backText: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.xs,
+    color: colors.textSecondary,
+  },
+
+  pressed: {
+    opacity: 0.78,
   },
 
   eyebrow: {
     fontFamily: fonts.bodyBold,
-    fontSize: fontSize.xs,
-    letterSpacing: 1.6,
+    fontSize: 9,
+    letterSpacing: 1.7,
     color: colors.gold,
   },
 
@@ -219,60 +341,113 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  card: {
-    padding: spacing[5],
-    borderRadius: radius['2xl'],
-    backgroundColor: colors.dark2,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing[4],
-  },
-
-  hero: {
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-
-  heroLabel: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSize.xs,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-
-  descriptionBox: {
-    padding: spacing[4],
-    borderRadius: radius.lg,
-    backgroundColor: colors.dark3,
-  },
-
-  description: {
+  subtitle: {
+    marginTop: 1,
     fontFamily: fonts.body,
     fontSize: fontSize.sm,
     lineHeight: 20,
     color: colors.textSecondary,
   },
 
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
+  loadingStack: {
+    gap: spacing[3],
   },
 
-  detailLine: {
+  heroCard: {
+    padding: spacing[5],
+    borderRadius: radius['2xl'],
+    backgroundColor: colors.dark3,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    gap: spacing[3],
+  },
+
+  heroEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    color: colors.textMuted,
+  },
+
+  heroStatus: {
+    alignSelf: 'flex-start',
+  },
+
+  description: {
+    marginTop: spacing[1],
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    color: colors.textSecondary,
+  },
+
+  heroDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginTop: spacing[2],
+  },
+
+  referenceBlock: {
     gap: spacing[1],
   },
 
+  referenceLabel: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1,
+    color: colors.textMuted,
+  },
+
+  referenceValue: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
+    color: colors.textPrimary,
+  },
+
+  detailsCard: {
+    marginTop: spacing[4],
+    paddingHorizontal: spacing[5],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[2],
+    borderRadius: radius.xl,
+    backgroundColor: colors.dark2,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  sectionEyebrow: {
+    marginBottom: spacing[1],
+    fontFamily: fonts.bodyBold,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    color: colors.gold,
+  },
+
+  detailRow: {
+    minHeight: 58,
+    paddingVertical: spacing[3],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing[4],
+  },
+
+  detailRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+
   detailLabel: {
+    flex: 0.8,
     fontFamily: fonts.bodyMedium,
     fontSize: fontSize.xs,
     color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
 
   detailValue: {
-    fontFamily: fonts.body,
+    flex: 1.2,
+    textAlign: 'right',
+    fontFamily: fonts.bodySemibold,
     fontSize: fontSize.sm,
     lineHeight: 19,
     color: colors.textPrimary,
@@ -280,34 +455,124 @@ const styles = StyleSheet.create({
 
   errorCard: {
     padding: spacing[4],
-    borderRadius: radius.lg,
-    backgroundColor: colors.dark3,
+    borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.redBorder,
-    gap: spacing[2],
+    backgroundColor: colors.redDim,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[3],
   },
 
-  error: {
-    fontFamily: fonts.body,
+  errorIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: radius.full,
+    backgroundColor: colors.dark3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  errorIconText: {
+    fontFamily: fonts.bodyBold,
     fontSize: fontSize.sm,
-    lineHeight: 19,
+    color: colors.red,
+  },
+
+  errorCopy: {
+    flex: 1,
+    gap: spacing[1],
+  },
+
+  errorTitle: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: fontSize.sm,
     color: colors.textPrimary,
   },
 
-  retry: {
+  errorText: {
+    fontFamily: fonts.body,
+    fontSize: fontSize.xs,
+    lineHeight: 18,
+    color: colors.textMuted,
+  },
+
+  retryButton: {
+    minHeight: 36,
+    paddingHorizontal: spacing[3],
+    borderRadius: radius.full,
+    backgroundColor: colors.dark3,
+    justifyContent: 'center',
+  },
+
+  retryText: {
     fontFamily: fonts.bodyBold,
+    fontSize: fontSize.xs,
+    color: colors.gold,
+  },
+
+  emptyCard: {
+    padding: spacing[6],
+    borderRadius: radius['2xl'],
+    backgroundColor: colors.dark2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.full,
+    backgroundColor: colors.goldDim,
+    borderWidth: 1,
+    borderColor: colors.goldBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  emptyIconText: {
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.xl,
+    color: colors.gold,
+  },
+
+  emptyTitle: {
+    marginTop: spacing[4],
+    fontFamily: fonts.brandSemibold,
+    fontSize: fontSize.lg,
+    color: colors.textPrimary,
+  },
+
+  emptyText: {
+    marginTop: spacing[2],
+    fontFamily: fonts.body,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+
+  historyLink: {
+    alignSelf: 'center',
+    marginTop: spacing[5],
+    minHeight: 44,
+    paddingHorizontal: spacing[4],
+    borderRadius: radius.full,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+
+  historyLinkText: {
+    fontFamily: fonts.bodySemibold,
     fontSize: fontSize.sm,
     color: colors.gold,
   },
 
-  backLink: {
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-
-  backText: {
-    fontFamily: fonts.bodySemibold,
-    fontSize: fontSize.sm,
+  historyArrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: fontSize.md,
     color: colors.gold,
   },
 });
