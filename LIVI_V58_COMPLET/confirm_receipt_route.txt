@@ -1,0 +1,20 @@
+r.post('/orders/:id/confirm-receipt', requireAuth, requireRoles('client','admin'), asyncHandler(async(req,res)=>{
+ const result=await tx(async c=>{
+  const s=(await c.query(`SELECT s.id shipment_id,s.status shipment_status,o.id order_id,o.buyer_id,o.status order_status
+    FROM shipments s JOIN orders o ON o.id=s.order_id
+    WHERE s.order_id=$1 FOR UPDATE`,[req.params.id])).rows[0];
+  if(!s)throw new HttpError(404,'Livraison introuvable pour cette commande');
+  if(req.user.role==='client'&&s.buyer_id!==req.user.sub)throw new HttpError(403,'Commande non autorisée');
+  if(s.order_status==='completed')return {order_id:s.order_id,status:'completed',escrow:'already_released',idempotent:true};
+  if(s.shipment_status==='lost')throw new HttpError(409,'La commande est déclarée perdue; elle doit suivre le parcours de litige.','SHIPMENT_LOST');
+  if(s.order_status!=='delivered'||s.shipment_status!=='delivered')throw new HttpError(409,'La remise physique doit être validée avant la confirmation de réception.','RECEIPT_NOT_READY');
+  const e=(await c.query('SELECT * FROM escrow_transactions WHERE order_id=$1 FOR UPDATE',[s.order_id])).rows[0];
+  if(!e||e.status!=='funded')throw new HttpError(409,'Escrow non disponible pour libération','ESCROW_NOT_READY');
+  const {releaseEscrowWithActiveCommission}=await import('../services/finance.js');
+  const released=await releaseEscrowWithActiveCommission(c,e,{metadata:{confirmed_by:req.user.sub}});
+  await c.query("UPDATE orders SET status='completed',delivery_confirmed_at=coalesce(delivery_confirmed_at,now()),delivery_confirmed_by=$2,updated_at=now() WHERE id=$1 AND status='delivered'",[s.order_id,req.user.sub]);
+  const guarantee=(await c.query(`SELECT id,status FROM intercity_guarantees WHERE order_id=$1 FOR UPDATE`,[s.order_id])).rows[0];
+  if(guarantee&&guarantee.status==='held')await c.query("UPDATE intercity_guarantees SET status='release_pending',release_pending_at=coalesce(release_pending_at,now()),updated_at=now() WHERE id=$1",[guarantee.id]);
+  return {order_id:s.order_id,status:'completed',escrow:'released',vendor_payable_xof:String(released.vendorNet),commission_xof:String(released.commission),shipping_payable_xof:String(e.shipping_fee),intercity_guarantee_status:guarantee?.status==='held'?'release_pending':guarantee?.status||null};
+ }); ok(res,result);
+}));
