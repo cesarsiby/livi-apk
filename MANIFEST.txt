@@ -1,0 +1,8 @@
+LIVI V60 — CORRECTIONS MANUELLES
+
+backend/livi/src/routes/delivery.js
+backend/livi/src/services/orderCancellation.js
+frontend/livi/src/screens/buyer/BuyerQRValidationScreen.tsx
+backend/livi/tests/v60_coherence_static.test.mjs
+tools/patch_compatibility_v60.py
+README_UPLOAD.md
